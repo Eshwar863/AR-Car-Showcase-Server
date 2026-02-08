@@ -19,6 +19,9 @@ target/
 *.iws
 *.iml
 *.ipr
+src/main/resources/cars_data_final.json
+*.json
+*.txt
 
 ### NetBeans ###
 /nbproject/private/

@@ -1,33 +1,35 @@
 package com.arcarshowcaseserver.service;
 
-import com.arcarshowcaseserver.dto.MakeDTO;
-import com.arcarshowcaseserver.dto.ModelDTO;
-import com.arcarshowcaseserver.dto.TrimDTO;
-import com.arcarshowcaseserver.dto.YearDTO;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import com.arcarshowcaseserver.model.Cars.Car;
+import com.arcarshowcaseserver.dto.CarDTO;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
-public class CarService {
+public interface CarService {
+    List<Car> GetAllCars();
 
-    private final CarQueryClient carQueryClient;
+    ResponseEntity<?> getAllBrands();
 
-    public YearDTO getYears() {
-        return carQueryClient.getYears();
-    }
+    ResponseEntity<?> getAllModels(String brand);
 
-    public List<MakeDTO> getMakes(Integer year) {
-        return carQueryClient.getMakes(year);
-    }
+    ResponseEntity<?> getAllVariants(String brand, String model);
 
-    public List<ModelDTO> getModels(String make, Integer year) {
-        return carQueryClient.getModels(make, year);
-    }
+    ResponseEntity<?> getVariant(String brand, String model, String variant);
 
-    public List<TrimDTO> getTrims(String make, String model, Integer year) {
-        return carQueryClient.getTrims(make, model, year);
-    }
+    ResponseEntity<List<CarDTO>>  getByBodyType(String bodyType);
+
+    ResponseEntity<List<CarDTO>>  getByBrandAndBodyType(String brand, String bodyType);
+
+    ResponseEntity<List<CarDTO>>  getByFuelType(String fuelType);
+
+    ResponseEntity<List<CarDTO>>  getBytransmissionType(String transmissionType);
+
+    ResponseEntity<List<CarDTO>>  getByRating(double rating);
+
+    ResponseEntity<List<CarDTO>>  getByPricing(double pricing);
+
+    List<Car> searchCars(String keyword);
+
+    ResponseEntity<Car> getCarsById(Long id);
 }
