@@ -1,9 +1,12 @@
 package com.arcarshowcaseserver.service;
 
+import com.arcarshowcaseserver.model.Cars.CarImage;
 import com.arcarshowcaseserver.model.Customization;
 import com.arcarshowcaseserver.model.User;
 import com.arcarshowcaseserver.payload.request.CustomizationRequest;
 import com.arcarshowcaseserver.payload.response.CustomizationResponse;
+import com.arcarshowcaseserver.model.Cars.Car;
+import com.arcarshowcaseserver.repository.CarRepository;
 import com.arcarshowcaseserver.repository.CustomizationRepository;
 import com.arcarshowcaseserver.repository.UserRepository;
 import com.arcarshowcaseserver.security.services.UserDetailsImpl;
@@ -32,6 +35,7 @@ import java.util.stream.Collectors;
 public class CustomizationService {
 
     private final CustomizationRepository customizationRepository;
+    private final CarRepository carRepository;
     private final UserRepository userRepository;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -55,8 +59,24 @@ public class CustomizationService {
 
         String generateUrl = blenderServiceUrl + "/generate";
         
+        if (request.getVehicleId() == null || request.getVehicleId().isEmpty()) {
+            throw new RuntimeException("Vehicle ID is missing in the request");
+        }
+
+        Long carId;
+        try {
+            carId = Long.parseLong(request.getVehicleId());
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("Invalid Vehicle ID format: " + request.getVehicleId() + ". Expected a numeric ID.");
+        }
+
+        Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new RuntimeException("Car not found in database with ID: " + carId));
+
+        String baseModelUrl = car.getModelUrl();
+        
         Map<String, Object> pythonRequest = new HashMap<>();
-        pythonRequest.put("base_model", "car.glb"); 
+        pythonRequest.put("base_model", baseModelUrl); 
         pythonRequest.put("materials", request.getMaterials());
         pythonRequest.put("output_name", "car_" + customization.getId().toString());
 
@@ -64,10 +84,16 @@ public class CustomizationService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(pythonRequest, headers);
 
-        ResponseEntity<Map> response = restTemplate.postForEntity(generateUrl, entity, Map.class);
+        System.out.println("[CustomizationService] Requesting generation from: " + generateUrl);
+        ResponseEntity<Map> response;
+        try {
+            response = restTemplate.postForEntity(generateUrl, entity, Map.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to connect to Blender service at " + generateUrl + ": " + e.getMessage(), e);
+        }
         
         if (response.getBody() == null || !response.getBody().containsKey("model_url")) {
-            throw new RuntimeException("Error from Blender service: " + response.getBody());
+            throw new RuntimeException("Invalid response from Blender service: " + response.getBody());
         }
 
         String modelFilename = (String) response.getBody().get("model_url");
@@ -76,13 +102,47 @@ public class CustomizationService {
         customization.setModelUrl(fullModelUrl);
         customizationRepository.save(customization);
 
-        return new CustomizationResponse(customization.getId(), fullModelUrl);
+        String image = car.getImages().stream()
+                .filter(img -> "Exterior".equalsIgnoreCase(img.getType()))
+                .map(CarImage::getImageUrl)
+                .findFirst()
+                .orElse(car.getImages().isEmpty() ? "" : car.getImages().get(0).getImageUrl());
+
+        return new CustomizationResponse(
+                customization.getId(),
+                fullModelUrl,
+                car.getBrand(),
+                car.getModel(),
+                image,
+                car.getId().toString(),
+                customization.getMaterials()
+        );
     }
 
     public List<CustomizationResponse> getUserCustomizations() {
         User user = getCurrentUser();
         return customizationRepository.findByUser(user).stream()
-                .map(c -> new CustomizationResponse(c.getId(), c.getModelUrl()))
+                .map(c -> {
+                    String brand = "";
+                    String model = "";
+                    String image = "";
+                    try {
+                        Long carId = Long.parseLong(c.getVehicleId());
+                        Car car = carRepository.findById(carId).orElse(null);
+                        if (car != null) {
+                            brand = car.getBrand();
+                            model = car.getModel();
+                            image = car.getImages().stream()
+                                    .filter(img -> "Exterior".equalsIgnoreCase(img.getType()))
+                                    .map(CarImage::getImageUrl)
+                                    .findFirst()
+                                    .orElse(car.getImages().isEmpty() ? "" : car.getImages().get(0).getImageUrl());
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("NumberFormatException");
+                    }
+                    return new CustomizationResponse(c.getId(), c.getModelUrl(), brand, model, image, c.getVehicleId(), c.getMaterials());
+                })
                 .collect(Collectors.toList());
     }
 

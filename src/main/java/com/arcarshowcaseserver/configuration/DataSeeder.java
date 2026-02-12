@@ -19,8 +19,10 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        System.out.println(">>> FORCE-SEEDING: Clearing existing car data...");
-        carRepository.deleteAll();
+        if (carRepository.count() > 0) {
+            System.out.println(">>> Car data already exists. Skipping seed.");
+            return;
+        }
         
         System.out.println(">>> Starting Car Data Seed (Literal Mapping + Configured Models)...");
         try (java.io.InputStream is = new org.springframework.core.io.ClassPathResource("cars_data_final.json")

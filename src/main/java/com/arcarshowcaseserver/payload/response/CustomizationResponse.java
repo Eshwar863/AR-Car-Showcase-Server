@@ -12,4 +12,9 @@ import java.util.UUID;
 public class CustomizationResponse {
     private UUID customizationId;
     private String modelUrl;
+    private String carBrand;
+    private String carModel;
+    private String carImage;
+    private String vehicleId;
+    private String materials;
 }
