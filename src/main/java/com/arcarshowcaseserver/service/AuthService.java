@@ -53,7 +53,13 @@ public class AuthService {
                 userDetails.getEmail(),
                 roles,
                 userDetails.getPhoneNumber(),
-                userDetails.getProfilePic());
+                userDetails.getProfilePic(),
+                userDetails.getFavBrands(),
+                userDetails.getPreferredBodyTypes(),
+                userDetails.getPreferredFuelTypes(),
+                userDetails.getPreferredTransmissions(),
+                userDetails.getDrivingCondition(),
+                userDetails.getMaxBudget());
     }
 
     @Transactional

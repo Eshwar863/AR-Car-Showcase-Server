@@ -36,6 +36,24 @@ public class UserDetailsImpl implements UserDetails {
     @Column(columnDefinition = "text")
     private String profilePic;
 
+    @Getter
+    private java.util.Set<String> favBrands;
+
+    @Getter
+    private java.util.Set<String> preferredBodyTypes;
+
+    @Getter
+    private java.util.Set<String> preferredFuelTypes;
+
+    @Getter
+    private java.util.Set<String> preferredTransmissions;
+
+    @Getter
+    private String drivingCondition;
+
+    @Getter
+    private Double maxBudget;
+
     private Collection<? extends GrantedAuthority> authorities;
 
     public static UserDetailsImpl build(User user) {
@@ -50,6 +68,12 @@ public class UserDetailsImpl implements UserDetails {
                 user.getPassword(),
                 user.getPhoneNumber(),
                 user.getProfilePic(),
+                user.getFavBrands(),
+                user.getPreferredBodyTypes(),
+                user.getPreferredFuelTypes(),
+                user.getPreferredTransmissions(),
+                user.getDrivingCondition(),
+                user.getMaxBudget(),
                 authorities);
     }
 

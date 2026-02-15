@@ -275,4 +275,51 @@ public interface CarRepository extends JpaRepository<Car, Long> {
            OR LOWER(d.value) LIKE LOWER(CONCAT('%', :keyword, '%'))
     """)
     List<Long> searchCarIds(@Param("keyword") String keyword);
+
+    @Query("SELECT DISTINCT c.brand FROM Car c ORDER BY c.brand")
+    List<String> findDistinctBrands();
+
+    @Query("SELECT DISTINCT c.bodyType FROM Car c ORDER BY c.bodyType")
+    List<String> findDistinctBodyTypes();
+
+    @Query("SELECT DISTINCT c.fuelType FROM Car c ORDER BY c.fuelType")
+    List<String> findDistinctFuelTypes();
+
+    @Query("SELECT DISTINCT c.transmissionType FROM Car c ORDER BY c.transmissionType")
+    List<String> findDistinctTransmissionTypes();
+
+    @Query("""
+        SELECT new com.arcarshowcaseserver.dto.CarDTO(
+            c.id,
+            c.brand,
+            c.model,
+            c.bodyType,
+            c.fuelType,
+            c.priceRange,
+            c.rating
+        )
+        FROM Car c
+        WHERE LOWER(c.brand) IN (:brands)
+           OR LOWER(c.bodyType) IN (:bodyTypes)
+           OR LOWER(c.fuelType) IN (:fuelTypes)
+           OR LOWER(c.transmissionType) IN (:transmissions)
+           OR LOWER(c.transmissionType) = LOWER(:drivingCondition)
+           OR (c.maxPriceLakhs <= :maxBudget)
+        ORDER BY (
+            (CASE WHEN LOWER(c.brand) IN (:brands) THEN 3 ELSE 0 END) +
+            (CASE WHEN LOWER(c.bodyType) IN (:bodyTypes) THEN 2 ELSE 0 END) +
+            (CASE WHEN LOWER(c.fuelType) IN (:fuelTypes) THEN 1.5 ELSE 0 END) +
+            (CASE WHEN LOWER(c.transmissionType) IN (:transmissions) THEN 1.5 ELSE 0 END) +
+            (CASE WHEN LOWER(c.transmissionType) = LOWER(:drivingCondition) THEN 1 ELSE 0 END) +
+            (CASE WHEN c.maxPriceLakhs <= :maxBudget THEN 1.5 ELSE 0 END)
+        ) DESC
+    """)
+    List<CarDTO> findCandidateCars(
+            @Param("brands") List<String> brands,
+            @Param("bodyTypes") List<String> bodyTypes,
+            @Param("fuelTypes") List<String> fuelTypes,
+            @Param("transmissions") List<String> transmissions,
+            @Param("drivingCondition") String drivingCondition,
+            @Param("maxBudget") Double maxBudget
+    );
 }

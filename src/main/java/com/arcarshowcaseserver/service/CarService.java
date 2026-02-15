@@ -32,4 +32,5 @@ public interface CarService {
     List<Car> searchCars(String keyword);
 
     ResponseEntity<Car> getCarsById(Long id);
+    com.arcarshowcaseserver.dto.CarOptionsDTO getCarOptions();
 }
