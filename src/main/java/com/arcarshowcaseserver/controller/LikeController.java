@@ -5,6 +5,7 @@ import com.arcarshowcaseserver.service.LikeService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -25,7 +26,7 @@ public class LikeController {
             return ResponseEntity.badRequest().body("Car id cannot be null");
         }
         likeService.likeCar(carId);
-        return ResponseEntity.ok("Car liked successfully");
+        return ResponseEntity.ok(Map.of("status", "success", "message", "Car liked successfully"));
     }
 
     @DeleteMapping("/car/{carId}")
@@ -35,7 +36,7 @@ public class LikeController {
             return ResponseEntity.badRequest().body("Car id cannot be null");
         }
         likeService.unlikeCar(carId);
-        return ResponseEntity.ok("Car unliked successfully");
+        return ResponseEntity.ok(Map.of("status", "success", "message", "Car unliked successfully"));
     }
 
     @GetMapping("/my-likes")

@@ -24,7 +24,8 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
             c.bodyType, 
             c.fuelType, 
             c.priceRange, 
-            c.rating
+            c.rating,
+            (SELECT ci.imageUrl FROM CarImage ci WHERE ci.car.id = c.id ORDER BY CASE WHEN LOWER(ci.type) = 'main' THEN 1 WHEN LOWER(ci.type) = 'exterior' THEN 2 WHEN LOWER(ci.type) = 'primary' THEN 3 ELSE 4 END ASC, ci.id ASC LIMIT 1)
         )
         FROM Like l
         JOIN l.car c

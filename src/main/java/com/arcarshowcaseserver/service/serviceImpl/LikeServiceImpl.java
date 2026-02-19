@@ -1,5 +1,7 @@
 package com.arcarshowcaseserver.service.serviceImpl;
 
+import java.time.LocalDateTime;
+
 import com.arcarshowcaseserver.dto.CarDTO;
 import com.arcarshowcaseserver.exceptions.DuplicateLikeException;
 import com.arcarshowcaseserver.exceptions.ResourceNotFoundException;
@@ -45,6 +47,7 @@ public class LikeServiceImpl implements LikeService {
         Like like = new Like();
         like.setCar(car);
         like.setUser(user);
+        like.setLikedAt(LocalDateTime.now());
         likeRepository.save(like);
     }
 
@@ -65,9 +68,6 @@ public class LikeServiceImpl implements LikeService {
     public Set<CarDTO> getUserLikedCars() {
         User user = retriveLoggedInUser();
         Set<CarDTO> carDTOS = likeRepository.findLikedCarsByUserId(user.getId());
-        if (carDTOS.isEmpty()) {
-            throw new ResourceNotFoundException("No liked cars found for user: " + user.getUsername());
-        }
         return carDTOS;
     }
 
