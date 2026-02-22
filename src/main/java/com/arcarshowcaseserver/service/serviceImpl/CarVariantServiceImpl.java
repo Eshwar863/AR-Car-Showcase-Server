@@ -1,6 +1,7 @@
 package com.arcarshowcaseserver.service.serviceImpl;
 
 import com.arcarshowcaseserver.dto.CarVariantDTO;
+import com.arcarshowcaseserver.exceptions.BadRequestException;
 import com.arcarshowcaseserver.exceptions.InvalidInputException;
 import com.arcarshowcaseserver.exceptions.ResourceNotFoundException;
 import com.arcarshowcaseserver.model.Cars.Car;
@@ -8,12 +9,9 @@ import com.arcarshowcaseserver.model.Cars.CarVariant;
 import com.arcarshowcaseserver.repository.CarRepository;
 import com.arcarshowcaseserver.repository.CarVariantRepository;
 import com.arcarshowcaseserver.service.CarVariantService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class CarVariantServiceImpl implements CarVariantService {
@@ -83,20 +81,26 @@ public class CarVariantServiceImpl implements CarVariantService {
         }
         return variants;
     }
+
     @Override
-    public ResponseEntity<Car> getByVariant(String variant) {
-        variant = getString(variant);
-        CarVariant carVariant = carVariantRepository.findByVariant(variant);
+    public Car getByVariant(String variant) {
+        if (variant == null || variant.isBlank()) {
+            throw new BadRequestException("Variant name cannot be blank");
+        }
+
+        String sanitized = sanitize(variant);
+
+        CarVariant carVariant = carVariantRepository.findByVariant(sanitized);
         if (carVariant == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw new ResourceNotFoundException(
+                    "No variant found with name: " + sanitized
+            );
         }
-        Optional<Car> car = carRepository.findById(
-                carVariant.getCar().getId()
-        );
-        if (car.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(car.get(), HttpStatus.OK);
+
+        return carRepository.findById(carVariant.getCar().getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Car not found for variant: " + sanitized
+                ));
     }
 
 
@@ -161,10 +165,8 @@ public class CarVariantServiceImpl implements CarVariantService {
                 variant.getKeySpecifications()
         );
     }
-    private String getString(String data){
-        return data.replace("+", " ")
-                .replaceAll("\\s+", " ")
-                .trim();
-    }
 
+    private String sanitize(String value) {
+        return value == null ? "" : value.trim();
+    }
 }

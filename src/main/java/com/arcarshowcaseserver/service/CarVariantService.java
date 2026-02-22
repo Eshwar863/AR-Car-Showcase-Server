@@ -21,5 +21,5 @@ public interface CarVariantService {
 
     List<CarVariant> getByBrandAndFuel(String model, String fuelType);
 
-    ResponseEntity<Car> getByVariant(String variant);
+    Car getByVariant(String variant);
 }

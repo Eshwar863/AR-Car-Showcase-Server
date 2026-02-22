@@ -1,9 +1,10 @@
 package com.arcarshowcaseserver.controller;
 
-
-import com.arcarshowcaseserver.model.Cars.Car;
 import com.arcarshowcaseserver.dto.CarDTO;
 import com.arcarshowcaseserver.dto.InteractionDTO;
+import com.arcarshowcaseserver.exceptions.BadRequestException;
+import com.arcarshowcaseserver.exceptions.ResourceNotFoundException;
+import com.arcarshowcaseserver.model.Cars.Car;
 import com.arcarshowcaseserver.service.CarService;
 import com.arcarshowcaseserver.service.RecommendationService;
 import jakarta.validation.constraints.Max;
@@ -24,75 +25,178 @@ public class CarController {
     private final CarService carService;
     private final RecommendationService recommendationService;
 
-    public CarController(CarService carService, RecommendationService recommendationService){
+    public CarController(CarService carService, RecommendationService recommendationService) {
         this.carService = carService;
         this.recommendationService = recommendationService;
     }
 
     @GetMapping("/allcars")
-    public ResponseEntity<List<Car>> allCars(){
-        return new ResponseEntity<>(carService.GetAllCars(), HttpStatus.OK);
+    public ResponseEntity<List<Car>> allCars() {
+        List<Car> cars = carService.GetAllCars();
+        if (cars.isEmpty()) {
+            throw new ResourceNotFoundException("No cars found");
+        }
+        return ResponseEntity.ok(cars);
     }
 
     @GetMapping("/car/{id}")
-    public ResponseEntity<Car> getCarsById(@PathVariable Long id){
+    public Car getCarsById(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            throw new BadRequestException("Car ID must be a positive number");
+        }
         return carService.getCarsById(id);
     }
 
     @GetMapping("/allBrands")
-    public ResponseEntity<?> allBrands(){
-        return new ResponseEntity<>(carService.getAllBrands(), HttpStatus.OK);
+    public ResponseEntity<List<String>> allBrands() {
+        List<String> brands = carService.getAllBrands();
+        if (brands.isEmpty()) {
+            throw new ResourceNotFoundException("No brands found");
+        }
+        return ResponseEntity.ok(brands);
     }
 
     @GetMapping("/{brand}/models")
-    public ResponseEntity<?> allModels(@PathVariable(name = "brand") String brand){
-        return new ResponseEntity<>(carService.getAllModels(brand), HttpStatus.OK);
+    public ResponseEntity<?> allModels(@PathVariable String brand) {
+        if (brand == null || brand.isBlank()) {
+            throw new BadRequestException("Brand name cannot be blank");
+        }
+        List<?> models = carService.getAllModels(brand);
+        if (models.isEmpty()) {
+            throw new ResourceNotFoundException("No models found for brand: " + brand);
+        }
+        return ResponseEntity.ok(models);
     }
 
     @GetMapping("/{brand}/{model}/variants")
-    public ResponseEntity<?> allVariants(@PathVariable(name = "brand") String brand, @PathVariable(name = "model") String model){
-        return new ResponseEntity<>(carService.getAllVariants(brand,model), HttpStatus.OK);
+    public ResponseEntity<?> allVariants(
+            @PathVariable String brand,
+            @PathVariable String model) {
+        if (brand == null || brand.isBlank()) {
+            throw new BadRequestException("Brand name cannot be blank");
+        }
+        if (model == null || model.isBlank()) {
+            throw new BadRequestException("Model name cannot be blank");
+        }
+        List<?> variants = carService.getAllVariants(brand, model);
+        if (variants.isEmpty()) {
+            throw new ResourceNotFoundException(
+                    "No variants found for: " + brand + " " + model
+            );
+        }
+        return ResponseEntity.ok(variants);
     }
 
     @GetMapping("/{brand}/{model}/{variant}")
-    public ResponseEntity<?> getVariant(@PathVariable(name = "brand") String brand, @PathVariable(name = "model") String model, @PathVariable(name = "variant") String variant){
-        return new ResponseEntity<>(carService.getVariant(brand,model,variant), HttpStatus.OK);
+    public ResponseEntity<?> getVariant(
+            @PathVariable String brand,
+            @PathVariable String model,
+            @PathVariable String variant) {
+        if (brand == null || brand.isBlank()) {
+            throw new BadRequestException("Brand name cannot be blank");
+        }
+        if (model == null || model.isBlank()) {
+            throw new BadRequestException("Model name cannot be blank");
+        }
+        if (variant == null || variant.isBlank()) {
+            throw new BadRequestException("Variant name cannot be blank");
+        }
+        return ResponseEntity.ok(carService.getVariant(brand, model, variant));
     }
 
+    // ─────────────────────────────────────────────────────────
+    //  GET /api/cars/body-type/{bodyType}
+    //  200 OK     → cars with body type
+    //  400        → blank bodyType
+    //  404        → none found
+    // ─────────────────────────────────────────────────────────
     @GetMapping("/body-type/{bodyType}")
-    public ResponseEntity<List<CarDTO>> getByBodyType(@PathVariable String bodyType){
-        return carService.getByBodyType(bodyType);
+    public ResponseEntity<List<CarDTO>> getByBodyType(@PathVariable String bodyType) {
+        if (bodyType == null || bodyType.isBlank()) {
+            throw new BadRequestException("Body type cannot be blank");
+        }
+        List<CarDTO> cars = carService.getByBodyType(bodyType);
+        if (cars == null || cars.isEmpty()) {
+            throw new ResourceNotFoundException("No cars found with body type: " + bodyType);
+        }
+        return ResponseEntity.ok(cars);
     }
 
-    @GetMapping("brand/{brand}/body-type/{bodyType}")
-    public ResponseEntity<List<CarDTO>> getByBrandAndBodyType(@PathVariable(name = "brand") String brand,@PathVariable(name = "bodyType") String bodyType){
-        return carService.getByBrandAndBodyType(brand,bodyType);
+    @GetMapping("/brand/{brand}/body-type/{bodyType}")
+    public ResponseEntity<List<CarDTO>> getByBrandAndBodyType(
+            @PathVariable String brand,
+            @PathVariable String bodyType) {
+        if (brand == null || brand.isBlank()) {
+            throw new BadRequestException("Brand cannot be blank");
+        }
+        if (bodyType == null || bodyType.isBlank()) {
+            throw new BadRequestException("Body type cannot be blank");
+        }
+        List<CarDTO> cars = carService.getByBrandAndBodyType(brand, bodyType);
+        if (cars == null || cars.isEmpty()) {
+            throw new ResourceNotFoundException(
+                    "No cars found for brand: " + brand + " and body type: " + bodyType
+            );
+        }
+        return ResponseEntity.ok(cars);
     }
 
-    @GetMapping("fuel-type/{fuelType}")
-    public ResponseEntity<List<CarDTO>> getByFuelType(@PathVariable(name = "fuelType") String fuelType){
-        return carService.getByFuelType(fuelType);
+    @GetMapping("/fuel-type/{fuelType}")
+    public ResponseEntity<List<CarDTO>> getByFuelType(@PathVariable String fuelType) {
+        if (fuelType == null || fuelType.isBlank()) {
+            throw new BadRequestException("Fuel type cannot be blank");
+        }
+        List<CarDTO> cars = carService.getByFuelType(fuelType);
+        if (cars == null || cars.isEmpty()) {
+            throw new ResourceNotFoundException("No cars found with fuel type: " + fuelType);
+        }
+        return ResponseEntity.ok(cars);
     }
 
-    @GetMapping("transmission-type/{transmissionType}")
-    public ResponseEntity<List<CarDTO>> getBytransmissionType(@PathVariable(name = "transmissionType") String transmissionType){
-        return carService.getBytransmissionType(transmissionType);
+    @GetMapping("/transmission-type/{transmissionType}")
+    public ResponseEntity<List<CarDTO>> getByTransmissionType(
+            @PathVariable String transmissionType) {
+        if (transmissionType == null || transmissionType.isBlank()) {
+            throw new BadRequestException("Transmission type cannot be blank");
+        }
+        List<CarDTO> cars = carService.getBytransmissionType(transmissionType);
+        if (cars == null || cars.isEmpty()) {
+            throw new ResourceNotFoundException(
+                    "No cars found with transmission type: " + transmissionType
+            );
+        }
+        return ResponseEntity.ok(cars);
     }
 
-    @GetMapping("rating/{rating}")
-    public ResponseEntity<List<CarDTO>> getByRating(@PathVariable(name = "rating")
-                                             @Min(value = 0, message = "Rating must be greater than 0")
-                                             @Max(value = 5, message = "Rating must be less than or equal to 5 ") double rating){
-        return carService.getByRating(rating);
+    @GetMapping("/rating/{rating}")
+    public ResponseEntity<List<CarDTO>> getByRating(
+            @PathVariable
+            @Min(value = 0, message = "Rating must be at least 0")
+            @Max(value = 5, message = "Rating must be at most 5")
+            double rating) {
+        List<CarDTO> cars = carService.getByRating(rating);
+        if (cars == null || cars.isEmpty()) {
+            throw new ResourceNotFoundException(
+                    "No cars found with rating >= " + rating
+            );
+        }
+        return ResponseEntity.ok(cars);
     }
 
-    @GetMapping("pricing/{pricing}")
-    public ResponseEntity<List<CarDTO>> getByPricing(@PathVariable(name = "pricing")
-                                              @Min(value = 1, message = "Price must be greater than 0")
-                                              @Max(value = 200, message = "Price must be less than or equal to 200 Lakhs") double pricing){
-        return carService.getByPricing(pricing);
+    @GetMapping("/pricing/{pricing}")
+    public ResponseEntity<List<CarDTO>> getByPricing(
+            @PathVariable
+            @Min(value = 1, message = "Price must be at least 1 Lakh")
+            @Max(value = 200, message = "Price must be at most 200 Lakhs")
+            double pricing) {
+        List<CarDTO> cars = carService.getByPricing(pricing);
+        if (cars == null || cars.isEmpty()) {
+            throw new ResourceNotFoundException(
+                    "No cars found under ₹" + pricing + " Lakhs"
+            );
+        }
+        return ResponseEntity.ok(cars);
     }
-
     @GetMapping("/recommendations/{carId}")
     public ResponseEntity<List<Car>> getRecommendations(@PathVariable Long carId) {
         List<Car> recommendations = recommendationService.getRecommendedCars(carId);
