@@ -4,7 +4,6 @@ import com.arcarshowcaseserver.dto.CarDetailDTO;
 import com.arcarshowcaseserver.dto.GroupedSpecsDTO;
 import com.arcarshowcaseserver.exceptions.BadRequestException;
 import com.arcarshowcaseserver.exceptions.ResourceNotFoundException;
-import com.arcarshowcaseserver.service.CarCompareService;
 import com.arcarshowcaseserver.service.CarDetailService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,11 +16,9 @@ import java.util.List;
 public class CarDetailsController {
 
     private final CarDetailService carDetailService;
-    private final CarCompareService carCompareService;
 
-    public CarDetailsController(CarDetailService carDetailService, CarCompareService carCompareService) {
+    public CarDetailsController(CarDetailService carDetailService) {
         this.carDetailService = carDetailService;
-        this.carCompareService = carCompareService;
     }
 
     @GetMapping
