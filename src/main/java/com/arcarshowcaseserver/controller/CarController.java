@@ -104,12 +104,7 @@ public class CarController {
         return ResponseEntity.ok(carService.getVariant(brand, model, variant));
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  GET /api/cars/body-type/{bodyType}
-    //  200 OK     → cars with body type
-    //  400        → blank bodyType
-    //  404        → none found
-    // ─────────────────────────────────────────────────────────
+
     @GetMapping("/body-type/{bodyType}")
     public ResponseEntity<List<CarDTO>> getByBodyType(@PathVariable String bodyType) {
         if (bodyType == null || bodyType.isBlank()) {
