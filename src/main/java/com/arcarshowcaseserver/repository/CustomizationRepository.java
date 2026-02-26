@@ -11,4 +11,6 @@ import java.util.UUID;
 @Repository
 public interface CustomizationRepository extends JpaRepository<Customization, UUID> {
     List<Customization> findByUser(User user);
+
+    long countByUser(User user);
 }

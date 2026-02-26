@@ -38,4 +38,6 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 
     @Query("SELECT CASE WHEN COUNT(l) > 0 THEN true ELSE false END FROM Like l WHERE l.car.id = :carId AND l.user.id = :userId")
     boolean existsByCarIdAndUserId(@Param("carId") Long carId, @Param("userId") Long userId);
+
+    long countByUser(User user);
 }
